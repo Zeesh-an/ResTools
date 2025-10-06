@@ -1,17 +1,33 @@
-# Google Sheets Reader
+# Papers Summarizer - Research Methodology Analysis Tool
 
-A Python application to read data from Google Sheets using the Google Sheets API. The sheet URL and configuration are stored in a config file for easy management.
+A comprehensive tool for downloading research papers from Google Sheets, processing PDFs, and generating AI-powered methodology summaries using OpenAI's GPT-4.
 
-## Features
+## 🚀 Features
 
-- Read data from Google Sheets using the official Google Sheets API
-- Configurable sheet URL and settings via JSON config file
-- Automatic authentication with Google services
-- Export data to CSV format
-- Support for custom ranges and worksheet selection
-- Get spreadsheet metadata and worksheet information
+- **Google Sheets Integration**: Read paper links from Google Sheets
+- **PDF Download**: Automatically download PDFs from provided links
+- **AI-Powered Analysis**: Generate comprehensive methodology summaries using OpenAI GPT-4
+- **Batch Processing**: Process multiple PDFs at once
+- **Google Sheets Update**: Add methodology summaries back to your spreadsheet
+- **Individual Processing**: Process single PDFs for testing
 
-## Setup
+## 📁 Project Structure
+
+```
+ResTools/
+├── batch_direct_upload_processor.py  # Main batch processor (RECOMMENDED)
+├── pdf_direct_upload.py             # Single PDF processor
+├── process_pdfs.py                  # PDF downloader from Google Sheets
+├── google_sheets_reader.py          # Google Sheets integration
+├── config.json                      # Configuration file
+├── requirements.txt                 # Python dependencies
+├── .gitignore                       # Git ignore rules
+├── papers_pdf_id/                   # Downloaded PDF files (ignored by git)
+├── summaries/                       # Generated methodology summaries (ignored by git)
+└── README.md                        # This file
+```
+
+## 🛠️ Setup
 
 ### 1. Install Dependencies
 
@@ -19,148 +35,175 @@ A Python application to read data from Google Sheets using the Google Sheets API
 pip install -r requirements.txt
 ```
 
-### 2. Google Cloud Console Setup
+### 2. Configure Google Sheets API
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google Sheets API:
-   - Go to "APIs & Services" > "Library"
-   - Search for "Google Sheets API"
-   - Click "Enable"
-4. Create credentials:
-   - Go to "APIs & Services" > "Credentials"
-   - Click "Create Credentials" > "OAuth 2.0 Client IDs"
-   - Choose "Desktop application"
-   - Download the JSON file and rename it to `credentials.json`
-   - Place it in the project directory
+2. Create a new project or select existing one
+3. Enable Google Sheets API
+4. Create credentials (OAuth 2.0 Client ID)
+5. Download `credentials.json` and place it in the project root
+6. Copy `credentials.json.template` to `credentials.json` and fill in your details
 
-### 3. Configure the Application
+### 3. Set Up OpenAI API Key
 
-1. Copy `credentials.json.template` to `credentials.json` and fill in your actual credentials (or use the downloaded file from step 2)
-2. Update `config.json` with your Google Sheet URL:
+Create a `.env` file in the project root:
+
+```bash
+echo "OPENAI_API_KEY=your-openai-api-key-here" > .env
+```
+
+Or set environment variable:
+
+```bash
+export OPENAI_API_KEY="your-openai-api-key-here"
+```
+
+### 4. Configure Google Sheet
+
+Update `config.json` with your Google Sheet details:
 
 ```json
 {
   "google_sheet": {
-    "url": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit#gid=0",
+    "url": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit",
     "worksheet_name": "Sheet1",
     "credentials_file": "credentials.json"
   },
   "settings": {
     "read_range": "A:Z",
-    "header_row": 1
+    "header_row": true
   }
 }
 ```
 
-### 4. Get Your Google Sheet ID
+## 🎯 Usage
 
-From your Google Sheets URL:
-```
-https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit#gid=0
-```
+### Complete Workflow (Recommended)
 
-The `SHEET_ID_HERE` part is what you need to put in the config file.
+1. **Download PDFs from Google Sheets**:
+   ```bash
+   python process_pdfs.py
+   ```
+   - Reads paper links from your Google Sheet
+   - Downloads PDFs to `papers_pdf_id/` directory
+   - Updates Google Sheet with PDF availability status
 
-## Usage
+2. **Generate Methodology Summaries for All PDFs**:
+   ```bash
+   python batch_direct_upload_processor.py
+   ```
+   - Processes all available PDFs
+   - Generates AI-powered methodology summaries
+   - Adds "Methodology" column to Google Sheet
+   - Saves individual summaries to `summaries/` directory
 
-### Basic Usage
+### Individual PDF Processing
 
-```python
-from google_sheets_reader import GoogleSheetsReader
-
-# Initialize reader with default config.json
-reader = GoogleSheetsReader()
-
-# Read the entire sheet
-df = reader.read_sheet()
-
-# Print first few rows
-print(df.head())
-
-# Save to CSV
-df.to_csv('output.csv', index=False)
-```
-
-### Advanced Usage
-
-```python
-# Read specific range
-df = reader.read_sheet(range_name='A1:C10')
-
-# Read different worksheet
-df = reader.read_sheet(worksheet_name='Data')
-
-# Get spreadsheet information
-info = reader.get_sheet_info()
-print(f"Sheet title: {info['title']}")
-print("Available worksheets:")
-for sheet in info['sheets']:
-    print(f"  - {sheet['title']}")
-```
-
-### Command Line Usage
-
-Run the script directly to read and display sheet data:
+For testing or single PDF analysis:
 
 ```bash
-python google_sheets_reader.py
+python pdf_direct_upload.py
 ```
 
-This will:
-1. Read the sheet specified in `config.json`
-2. Display sheet information and first 5 rows
-3. Save the data to `sheet_data.csv`
+## 📋 Methodology Summary Format
 
-## Configuration Options
+Each generated summary includes:
 
-The `config.json` file supports the following options:
+1. **Methodology Overview** (2-3 sentences describing the overall approach)
+2. **Key Steps in Bullet Points** (Detailed step-by-step breakdown)
+3. **Methodology Flow** (Logical sequence and flow description)
+4. **Key Techniques/Tools Used** (Algorithms, frameworks, tools)
+5. **Data Sources/Inputs** (What data or inputs are used)
+6. **Output/Results** (What the methodology produces)
 
-- `google_sheet.url`: Full URL to your Google Sheet
-- `google_sheet.worksheet_name`: Name of the worksheet to read (default: "Sheet1")
-- `google_sheet.credentials_file`: Path to your credentials JSON file
-- `settings.read_range`: Range to read (e.g., "A:Z" for all columns, "A1:C10" for specific range)
-- `settings.header_row`: Whether to use the first row as column headers (1 for yes, 0 for no)
+## 🔧 Configuration
 
-## File Structure
+### Google Sheets Setup
 
-```
-Papers_Summarizer/
-├── config.json                 # Configuration file
-├── credentials.json           # Google API credentials (create this)
-├── credentials.json.template  # Template for credentials
-├── google_sheets_reader.py    # Main application
-├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-└── token.json                # Auto-generated auth token (after first run)
-```
+Your Google Sheet should have:
+- A column with paper links (default: "link")
+- Headers in the first row
+- Proper sharing permissions for your Google account
 
-## Troubleshooting
+### OpenAI Configuration
+
+- Uses GPT-4 Turbo for analysis
+- Handles file uploads up to 512MB
+- Includes rate limiting to avoid API limits
+- Fallback methods for reliability
+
+## 📊 Output Files
+
+- `processed_sheet_with_methodology.csv` - Local backup of updated sheet data
+- `summaries/*.txt` - Individual methodology summaries for each PDF
+- `papers_pdf_id/*.pdf` - Downloaded PDF files
+
+## 🚨 Important Notes
+
+### File Management
+- PDF files and summaries are **ignored by Git** (see `.gitignore`)
+- Keep your API keys secure and never commit them
+- Regular backups of your Google Sheet are recommended
+
+### API Limits
+- OpenAI API has rate limits and costs per request
+- Batch processing includes delays between requests
+- Monitor your OpenAI usage and billing
+
+### Error Handling
+- Failed PDF downloads are marked in the sheet
+- Failed summaries are logged with error messages
+- Processing continues even if individual files fail
+
+## 🔍 Troubleshooting
 
 ### Common Issues
 
-1. **"Credentials file not found"**
-   - Make sure you've downloaded `credentials.json` from Google Cloud Console
-   - Ensure the file is in the same directory as the script
+1. **Google Sheets Permission Error**:
+   - Check if `credentials.json` is properly configured
+   - Ensure your Google account has access to the sheet
+   - Verify Google Sheets API is enabled
 
-2. **"Invalid Google Sheets URL"**
-   - Check that your URL is in the correct format
-   - Make sure the sheet ID is properly extracted from the URL
+2. **OpenAI API Error**:
+   - Verify your API key is correct and has sufficient credits
+   - Check if you have access to GPT-4 models
+   - Ensure your API key has file upload permissions
 
-3. **"Permission denied"**
-   - Ensure the Google Sheet is shared with the email associated with your credentials
-   - Check that the Google Sheets API is enabled in your Google Cloud project
+3. **PDF Download Failures**:
+   - Check if URLs are accessible
+   - Verify PDF links are direct download links
+   - Some academic sites may require authentication
 
-4. **Authentication errors**
-   - Delete `token.json` and run the script again to re-authenticate
-   - Make sure your credentials are valid and not expired
+4. **Memory Issues**:
+   - Large PDFs may cause memory issues
+   - Consider processing smaller batches
+   - Monitor system resources during batch processing
 
-### Making Sheets Public
+### Getting Help
 
-If you want to read public sheets without authentication:
-1. Make your Google Sheet public (View > Anyone with the link can view)
-2. Use the sheet ID directly in the URL format: `https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0`
+1. Check the error messages in the console output
+2. Verify all configuration files are properly set up
+3. Test with a single PDF first using `pdf_direct_upload.py`
+4. Check OpenAI API status and your account limits
 
-## License
+## 📈 Performance Tips
 
-This project is open source and available under the MIT License.
+- **Batch Processing**: Use `batch_direct_upload_processor.py` for multiple PDFs
+- **Rate Limiting**: Built-in delays prevent API rate limit issues
+- **Error Recovery**: Failed files don't stop the entire batch
+- **Local Storage**: Summaries are saved locally for backup
+
+## 🔒 Security
+
+- API keys are stored in `.env` file (ignored by Git)
+- Google credentials are stored in `credentials.json` (ignored by Git)
+- No sensitive data is committed to version control
+- PDF files and summaries are kept local
+
+## 📝 License
+
+This project is for research and educational purposes. Please ensure you have proper permissions to download and analyze the research papers you're processing.
+
+---
+
+**Happy Research Analysis! 🎓📚**
