@@ -51,6 +51,7 @@ token.json
 papers_pdf_id/
 processed_*.csv
 sheet_data.csv
+summaries/
 
 # IDE
 .vscode/
